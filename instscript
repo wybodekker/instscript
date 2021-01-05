@@ -1,0 +1,137 @@
+#!/bin/bash
+
+Version=1.07
+Myname="${0##*/}"
+
+:<<'DOC'
+= instscript - install a script and its gendoc documentation
+
+= Synopsis
+instscript [options] scriptname 	
+
+== Options
+-d|--debug	set debug flag: keep intermediate files for inspection
+-e|--extras	comma separated list of extra files to be zipped
+-H|--Help	print full documentation via less and exit
+-h|--help	print short help and exit
+-m|--markdown	use markdown for bitbucket-compatible output
+-V|--version	print version and exit
+-z|--zip	create zip file for CTAN
+
+= Description
+instscript installs a (bash, ruby, perl, ...) script, which
+is maintained using the git source code management system.
+The environment variable |PREFIX| tells where thing are
+installed:
+
+The script is installed in |$PREFIX/bin|. Its documentation
+is extracted and placed in |$PREFIX/html| (for the html
+documentation), in |$PREFIX/pdf| for the PDF documentation
+and in |$PREFIX/man/man1| (for the man page). |instscript|
+must be executed in the script's mercurial directory.
+
+The script must have valid gendoc documentation - see
+[github](https://github.com/wybodekker/gendoc) The first
+paragraph that is found under the |= Description| header is
+saved in a |README.md| file, which should be part of the
+source: it is used by github. Bars (|) will be stripped
+from that paragraph.
+
+With the |--zip| option, a zip file containing the script
+and a README file is created.
+
+= Author
+[Wybo Dekker](wybo@dekkerdocumenten.nl)
+
+= Copyright
+Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
+DOC
+
+REd='\e[38;5;9m'
+    die() { local i; for i; do echo -e "$Myname: $REd$i"; done 1>&2; exit 1; }
+helpsrt() { sed -n '/^= Synopsis/,/^= /p' "$0"|sed '1d;$d'; exit; }
+helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed -n '1d;$d;p'|
+            less -Ps"$Myname-${Version/./·} documentation - type h for help, q to quit."
+		exit
+	  }
+
+[[ -n $PREFIX ]] || die "The environment variable PREFIX if undefined"
+[[ -d $PREFIX ]] || die "The environment variable PREFIX does not point to a directory"
+
+if ! options=$(getopt \
+   -n "$Myname" \
+   -o hHVzpde:mI \
+   -l help,Help,version,zip,debug,extras: -- "$@"
+); then exit 1; fi
+eval set -- "$options"
+
+zip=false gendocopt='' 
+while [ $# -gt 0 ]; do
+   case $1 in
+   (-d|--debug)    # set debug flag: keep intermediate files for inspection
+		   gendocopt=-d
+		   shift
+		   ;;
+   (-e|--extras)   # comma separated list of extra files to be zipped
+		   extras=",$2"
+		   shift 2
+		   ;;
+   (-H|--Help)     # print full documentation via less and exit
+		   helpall
+		   ;;
+   (-h|--help)     # print short help and exit
+		   helpsrt
+		   ;;
+   (-V|--version)  # print version and exit
+		   echo $Version
+		   exit
+		   ;;
+   (-z|--zip) 	   # create zip file for CTAN
+		   zip=true
+		   shift
+		   ;;
+   (-I)            $0 "$0"
+		   exit
+		   ;;
+   (--)            shift
+		   break
+		   ;;
+   (*)             break
+		   ;;
+   esac
+done
+
+test -d .git || die "not running in git directory but in $(pwd)"
+scriptname=${1##*/}
+[[ -n $scriptname ]] || die "I need the name of a script in the current directory"
+[[ -e $scriptname ]] || die "./$scriptname: not found (run me in script's git directory)"
+
+# use scriptinfo to gather information from the script:
+scriptversion='' short='' type=''
+for i in short type scriptversion intro changes; do
+   read -r ${i?}
+done < <(scriptinfo --brief "$scriptname")
+
+# is all info there?
+[[ -n $scriptversion ]] || die "$scriptname has no version"
+[[ -n $short ]]         || die "found no line starting with: = $scriptname - ..."
+[[ -n $type ]]          || die "Could not find type of $scriptname in shebang line"
+
+# be sure that the script is executable:
+chmod 755 "$scriptname"
+
+# install the script in $PREFIX/bin:
+cp "$scriptname" "$PREFIX/bin"
+
+# generate the documentation:
+gendoc $gendocopt "$scriptname" || exit 1
+
+# generate the README.md file
+scriptinfo -m "$scriptname" >README.md
+
+# if a zip is required, generate it:
+if $zip; then
+   cd ..
+   eval "zip -Drq $scriptname/$scriptname-$scriptversion.zip \
+                  $scriptname/{README.md,$scriptname,$scriptname.pdf$extras}"
+fi
