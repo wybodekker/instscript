@@ -55,53 +55,69 @@ helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed -n '1d;$d;p'|
 		exit
 	  }
 
+:<<'DOC' #----------------------------------------------------------------------
+= handle_options
+synopsis:	 handle_options "$@"
+description:	handle the options.
+globals used:	 Myname Version
+globals  set:	 args zip gendocopt extras
+DOC
+#-------------------------------------------------------------------------------
+handle_options() {
+   local options
+   if ! options=$(getopt \
+      -n "$Myname" \
+      -o hHVzpde:mI \
+      -l help,Help,version,zip,debug,extras: -- "$@"
+   ); then exit 1; fi
+   eval set -- "$options"
+   zip=false gendocopt='' extras=''
+   while [ $# -gt 0 ]; do
+      case $1 in
+      (-d|--debug)    # set debug flag: keep intermediate files for inspection
+   	   gendocopt=-d
+   	   shift
+   	   ;;
+      (-e|--extras)   # comma separated list of extra files to be zipped
+   	   extras=",$2"
+   	   shift 2
+   	   ;;
+      (-H|--Help)     # print full documentation via less and exit
+   	   helpall
+   	   ;;
+      (-h|--help)     # print short help and exit
+   	   helpsrt
+   	   ;;
+      (-V|--version)  # print version and exit
+   	   echo $Version
+   	   exit
+   	   ;;
+      (-z|--zip)      # create zip file for CTAN
+   	   zip=true
+   	   shift
+   	   ;;
+      (-I) $0 "$0"
+   	   exit
+   	   ;;
+      (--) shift
+   	   break
+   	   ;;
+      (*)  break
+   	   ;;
+      esac
+   done
+   args=( "$@" )
+   return ${#args}
+}
+
 [[ -n $PREFIX ]] || die "The environment variable PREFIX if undefined"
 [[ -d $PREFIX ]] || die "The environment variable PREFIX does not point to a directory"
 
-if ! options=$(getopt \
-   -n "$Myname" \
-   -o hHVzpde:mI \
-   -l help,Help,version,zip,debug,extras: -- "$@"
-); then exit 1; fi
-eval set -- "$options"
+handle_options "$@" ||  set "${args[@]}"
 
-zip=false gendocopt='' 
-while [ $# -gt 0 ]; do
-   case $1 in
-   (-d|--debug)    # set debug flag: keep intermediate files for inspection
-		   gendocopt=-d
-		   shift
-		   ;;
-   (-e|--extras)   # comma separated list of extra files to be zipped
-		   extras=",$2"
-		   shift 2
-		   ;;
-   (-H|--Help)     # print full documentation via less and exit
-		   helpall
-		   ;;
-   (-h|--help)     # print short help and exit
-		   helpsrt
-		   ;;
-   (-V|--version)  # print version and exit
-		   echo $Version
-		   exit
-		   ;;
-   (-z|--zip) 	   # create zip file for CTAN
-		   zip=true
-		   shift
-		   ;;
-   (-I)            $0 "$0"
-		   exit
-		   ;;
-   (--)            shift
-		   break
-		   ;;
-   (*)             break
-		   ;;
-   esac
-done
-
+test $# -eq 1 || die "I need 1 input file"
 test -d .git || die "not running in git directory but in $(pwd)"
+
 scriptname=${1##*/}
 [[ -n $scriptname ]] || die "I need the name of a script in the current directory"
 [[ -e $scriptname ]] || die "./$scriptname: not found (run me in script's git directory)"
