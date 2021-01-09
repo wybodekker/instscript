@@ -107,13 +107,13 @@ handle_options() {
       esac
    done
    args=( "$@" )
-   return ${#args}
 }
 
 [[ -n $PREFIX ]] || die "The environment variable PREFIX if undefined"
 [[ -d $PREFIX ]] || die "The environment variable PREFIX does not point to a directory"
 
-handle_options "$@" ||  set "${args[@]}"
+handle_options "$@"
+set -- "${args[@]}"
 
 test $# -eq 1 || die "I need 1 input file"
 test -d .git || die "not running in git directory but in $(pwd)"
