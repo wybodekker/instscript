@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Version=1.07
+Version=1.08
 Myname="${0##*/}"
 
 :<<'DOC'
@@ -50,28 +50,25 @@ DOC
 REd='\e[38;5;9m'
     die() { local i; for i; do echo -e "$Myname: $REd$i"; done 1>&2; exit 1; }
 helpsrt() { sed -n '/^= Synopsis/,/^= /p' "$0"|sed '1d;$d'; exit; }
-helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed -n '1d;$d;p'|
-            less -Ps"$Myname-${Version/./·} documentation - type h for help, q to quit."
-		exit
-	  }
+helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed '1d;$d'|
+            less -P"$Myname-${Version/./·} (press h for help, q to quit)";exit; }
 
 :<<'DOC' #----------------------------------------------------------------------
 = handle_options
 synopsis:	 handle_options "$@"
 description:	handle the options.
 globals used:	 Myname Version
-globals  set:	 args zip gendocopt extras
+globals  set:	 args zip gendocopt
 DOC
 #-------------------------------------------------------------------------------
 handle_options() {
-   local options
    if ! options=$(getopt \
       -n "$Myname" \
       -o hHVzpde:mI \
       -l help,Help,version,zip,debug,extras: -- "$@"
    ); then exit 1; fi
    eval set -- "$options"
-   zip=false gendocopt='' extras=''
+   zip=false gendocopt='' 
    while [ $# -gt 0 ]; do
       case $1 in
       (-d|--debug)    # set debug flag: keep intermediate files for inspection
@@ -96,7 +93,7 @@ handle_options() {
    	   zip=true
    	   shift
    	   ;;
-      (-I) $0 "$0"
+      (-I) $0 "$0" || die "the -I option is for developers only"
    	   exit
    	   ;;
       (--) shift
@@ -116,11 +113,16 @@ handle_options "$@"
 set -- "${args[@]}"
 
 test $# -eq 1 || die "I need 1 input file"
-test -d .git || die "not running in git directory but in $(pwd)"
 
+curdir=$(pwd)
+curdir=${curdir##*/}
 scriptname=${1##*/}
-[[ -n $scriptname ]] || die "I need the name of a script in the current directory"
-[[ -e $scriptname ]] || die "./$scriptname: not found (run me in script's git directory)"
+[[ -n $scriptname ]] ||
+   die "I need the name of a script in the current directory"
+[[ -e $scriptname ]] ||
+   die "./$scriptname: not found"
+[[ $scriptname == "$curdir" ]] ||
+   die "script must live directory with the same name"
 
 # use scriptinfo to gather information from the script:
 scriptversion='' short='' type=''
