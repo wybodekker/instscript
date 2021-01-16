@@ -5,7 +5,7 @@
 |    type | bash
 |  author | Wybo Dekker
 |   email | wybo@dekkerdocumenten.nl
-| version | 1.07
+| version | 1.08
 | license | GNU General Public License
 
 instscript installs a (bash, ruby, perl, ...) script, which
