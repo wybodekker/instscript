@@ -10,18 +10,17 @@ Myname="${0##*/}"
 instscript [options] scriptname 	
 
 == Options
+-h|--help	print short help and exit
+-H|--Help	print full documentation via less and exit
+-V|--version	print version and exit
 -d|--debug	set debug flag: keep intermediate files for inspection
 -e|--extras	comma separated list of extra files to be zipped
--H|--Help	print full documentation via less and exit
--h|--help	print short help and exit
--m|--markdown	use markdown for bitbucket-compatible output
--V|--version	print version and exit
 -z|--zip	create zip file for CTAN
 
 = Description
 instscript installs a (bash, ruby, perl, ...) script, which
 is maintained using the git source code management system.
-The environment variable |PREFIX| tells where thing are
+The environment variable |PREFIX| tells where things are
 installed:
 
 The script is installed in |$PREFIX/bin|. Its documentation
@@ -64,13 +63,23 @@ DOC
 handle_options() {
    if ! options=$(getopt \
       -n "$Myname" \
-      -o hHVzpde:mI \
+      -o hHVzde:I \
       -l help,Help,version,zip,debug,extras: -- "$@"
    ); then exit 1; fi
    eval set -- "$options"
    zip=false gendocopt='' 
    while [ $# -gt 0 ]; do
       case $1 in
+      (-h|--help)     # print short help and exit
+   	   helpsrt
+   	   ;;
+      (-H|--Help)     # print full documentation via less and exit
+   	   helpall
+   	   ;;
+      (-V|--version)  # print version and exit
+   	   echo $Version
+   	   exit
+   	   ;;
       (-d|--debug)    # set debug flag: keep intermediate files for inspection
    	   gendocopt=-d
    	   shift
@@ -78,16 +87,6 @@ handle_options() {
       (-e|--extras)   # comma separated list of extra files to be zipped
    	   extras=",$2"
    	   shift 2
-   	   ;;
-      (-H|--Help)     # print full documentation via less and exit
-   	   helpall
-   	   ;;
-      (-h|--help)     # print short help and exit
-   	   helpsrt
-   	   ;;
-      (-V|--version)  # print version and exit
-   	   echo $Version
-   	   exit
    	   ;;
       (-z|--zip)      # create zip file for CTAN
    	   zip=true

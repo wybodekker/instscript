@@ -10,5 +10,5 @@
 
 instscript installs a (bash, ruby, perl, ...) script, which
 is maintained using the git source code management system.
-The environment variable PREFIX tells where thing are
+The environment variable PREFIX tells where things are
 installed:
