@@ -138,7 +138,7 @@ done < <(scriptinfo --brief "$scriptname")
 chmod 755 "$scriptname"
 
 # install the script in $PREFIX/bin:
-cp "$scriptname" "$PREFIX/bin"
+cp -a "$scriptname" "$PREFIX/bin"
 
 # generate the documentation:
 gendoc $gendocopt "$scriptname" || exit 1
