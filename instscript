@@ -105,7 +105,7 @@ handle_options() {
    args=( "$@" )
 }
 
-[[ -n $PREFIX ]] || die "The environment variable PREFIX if undefined"
+[[ -n $PREFIX ]] || die "The environment variable PREFIX is undefined"
 [[ -d $PREFIX ]] || die "The environment variable PREFIX does not point to a directory"
 
 handle_options "$@"
