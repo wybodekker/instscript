@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Version=1.08
+Version=1.09
 Myname="${0##*/}"
 
 :<<'DOC'
@@ -122,6 +122,7 @@ scriptname=${1##*/}
    die "./$scriptname: not found"
 [[ $scriptname == "$curdir" ]] ||
    die "script must live directory with the same name"
+scriptname="./$scriptname"
 
 # use scriptinfo to gather information from the script:
 scriptversion='' short='' type=''
