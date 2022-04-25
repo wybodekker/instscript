@@ -10,16 +10,16 @@ Myname="${0##*/}"
 instscript [options] scriptname 	
 
 == Options
--h|--help	print short help and exit
--H|--Help	print full documentation via less and exit
--V|--version	print version and exit
--d|--debug	set debug flag: keep intermediate files for inspection
--e|--extras	comma separated list of extra files to be zipped
--z|--zip	create zip file for CTAN
+-h,--help	print short help and exit
+-H,--Help	print full documentation via less and exit
+-V,--version	print version and exit
+-d,--debug	set debug flag: keep intermediate files for inspection
+-e,--extras=X	set list of extra files to be zipped to X (comma separated)
+-z,--zip	create zip file for CTAN
 
 = Description
-instscript installs a (bash, ruby, perl, ...) script, which
-is maintained using the git source code management system.
+instscript installs a (bash, ruby, perl, ...) script, for which
+the documentation is maintained in the gendoc format.
 The environment variable |PREFIX| tells where things are
 installed:
 
@@ -30,7 +30,7 @@ and in |$PREFIX/man/man1| (for the man page). |instscript|
 must be executed in the script's mercurial directory.
 
 The script must have valid gendoc documentation - see
-[github](https://github.com/wybodekker/gendoc) The first
+[github](github.com/wybodekker/gendoc) The first
 paragraph that is found under the |= Description| header is
 saved in a |README.md| file, which should be part of the
 source: it is used by github. Bars (|) will be stripped
@@ -84,7 +84,7 @@ handle_options() {
    	   gendocopt=-d
    	   shift
    	   ;;
-      (-e|--extras)   # comma separated list of extra files to be zipped
+      (-e|--extras)   # set list of extra files to be zipped to X (comma separated)
    	   extras=",$2"
    	   shift 2
    	   ;;
@@ -142,7 +142,7 @@ chmod 755 "$scriptname"
 cp -a "$scriptname" "$PREFIX/bin"
 
 # generate the documentation:
-gendoc $gendocopt "$scriptname" || exit 1
+gendoc $gendocopt "$PREFIX/bin/$scriptname" || exit 1
 
 # generate the README.md file
 scriptinfo -m "$scriptname" >README.md
