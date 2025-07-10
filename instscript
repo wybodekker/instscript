@@ -27,7 +27,7 @@ The script is installed in |$PREFIX/bin|. Its documentation
 is extracted and placed in |$PREFIX/html| (for the html
 documentation), in |$PREFIX/pdf| for the PDF documentation
 and in |$PREFIX/man/man1| (for the man page). |instscript|
-must be executed in the script's mercurial directory.
+must be executed in the script's source directory.
 
 The script must have valid gendoc documentation - see
 [github](github.com/wybodekker/gendoc) The first
@@ -40,7 +40,7 @@ With the |--zip| option, a zip file containing the script
 and a README file is created.
 
 = Author
-[Wybo Dekker](wybo@dekkerdocumenten.nl)
+[Wybo Dekker](wybodekker@me.com)
 
 = Copyright
 Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
