@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Version=1.09
+Version=1.10
 Myname="${0##*/}"
 
 :<<'DOC'
@@ -36,8 +36,8 @@ saved in a |README.md| file, which should be part of the
 source: it is used by github. Bars (|) will be stripped
 from that paragraph.
 
-With the |--zip| option, a zip file containing the script
-and a README file is created.
+With the |--zip| option, a zip file containing the script,
+a README file, a man page, and html and pdf documents is created.
 
 = Author
 [Wybo Dekker](wybodekker@me.com)
@@ -46,18 +46,22 @@ and a README file is created.
 Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
 DOC
 
-REd='\e[38;5;9m'
-    die() { local i; for i; do echo -e "$Myname: $REd$i"; done 1>&2; exit 1; }
-helpsrt() { sed -n '/^= Synopsis/,/^= /p' "$0"|sed '1d;$d'; exit; }
-helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed '1d;$d'|
-            less -P"$Myname-${Version/./·} (press h for help, q to quit)";exit; }
+Red='' Nor=''
+[ -t 1 ] && command -v tput >/dev/null && (( $(tput colors) >= 8 )) && { 
+  Red=$(tput bold && tput setaf 1) 
+  Nor=$(tput sgr0)
+} 
+    die() { local i; for i; do echo -e "$Myname: $Red$i$Nor"; done >&2; exit 1; } 
+helpsrt() { sed -n '/^= Synopsis/,/^= /p' "$0"|sed '1d;$d'; exit 0; } 
+helpall() { sed -n "/^:<<'DOC'$/,/^DOC/p" "$0"|sed '1d;$d'| 
+            less -P"$Myname-${Version/./·} (press h for help, q to quit)";exit 0; }
 
 :<<'DOC' #----------------------------------------------------------------------
 = handle_options
 synopsis:	 handle_options "$@"
 description:	handle the options.
 globals used:	 Myname Version
-globals  set:	 args zip gendocopt
+globals  set:	 args zip
 DOC
 #-------------------------------------------------------------------------------
 handle_options() {
@@ -67,7 +71,7 @@ handle_options() {
       -l help,Help,version,zip,debug,extras: -- "$@"
    ); then exit 1; fi
    eval set -- "$options"
-   zip=false gendocopt='' 
+   zip=false
    while [ $# -gt 0 ]; do
       case $1 in
       (-h|--help)     # print short help and exit
@@ -80,12 +84,8 @@ handle_options() {
    	   echo $Version
    	   exit
    	   ;;
-      (-d|--debug)    # set debug flag: keep intermediate files for inspection
-   	   gendocopt=-d
-   	   shift
-   	   ;;
-      (-e|--extras)   # set list of extra files to be zipped to X (comma separated)
-   	   extras=",$2"
+      (-e|--extras)   # set list of extra files to be zipped to X (space separated)
+   	   extras="$2"
    	   shift 2
    	   ;;
       (-z|--zip)      # create zip file for CTAN
@@ -110,8 +110,7 @@ handle_options() {
 
 handle_options "$@"
 set -- "${args[@]}"
-
-test $# -eq 1 || die "I need 1 input file"
+(( $# == 1 )) || die "I need 1 input file"
 
 curdir=$(pwd)
 curdir=${curdir##*/}
@@ -122,7 +121,6 @@ scriptname=${1##*/}
    die "./$scriptname: not found"
 [[ $scriptname == "$curdir" ]] ||
    die "script must live directory with the same name"
-scriptname="./$scriptname"
 
 # use scriptinfo to gather information from the script:
 scriptversion='' short='' type=''
@@ -136,20 +134,25 @@ done < <(scriptinfo --brief "$scriptname")
 [[ -n $type ]]          || die "Could not find type of $scriptname in shebang line"
 
 # be sure that the script is executable:
-chmod 755 "$scriptname"
+chmod a+x "$scriptname"
 
 # install the script in $PREFIX/bin:
-cp -a "$scriptname" "$PREFIX/bin"
+cp -af "$scriptname" "$PREFIX/bin"
 
 # generate the documentation:
-gendoc $gendocopt "$PREFIX/bin/$scriptname" || exit 1
+gendoc "$PREFIX/bin/$scriptname" || exit 1
 
 # generate the README.md file
 scriptinfo -m "$scriptname" >README.md
 
 # if a zip is required, generate it:
 if $zip; then
+   cp -f "$PREFIX/pdf/$scriptname.pdf" .
+   cp -f "$PREFIX/html/$scriptname.html" .
+   cp -f "$PREFIX/man/man1/$scriptname.1" .
    cd ..
-   eval "zip -Drq $scriptname/$scriptname-$scriptversion.zip \
-                  $scriptname/{README.md,$scriptname,$scriptname.pdf$extras}"
+   zipname="$scriptname/$scriptname-$scriptversion.zip"
+   zip -Dq "$zipname" "$scriptname"/"$scriptname"
+   [[ -z $extras ]] || eval "zip -Drq $zipname $extras"
+   zip -Dmq "$zipname" "$scriptname/$scriptname".{pdf,html,1} "$scriptname"/README.md
 fi
