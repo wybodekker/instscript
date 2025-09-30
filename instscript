@@ -44,6 +44,9 @@ a README file, a man page, and html and pdf documents is created.
 
 = Copyright
 Released under the [GNU General Public License](www.gnu.org/copyleft/gpl.html)
+
+= See also
+gendoc(1) scriptinfo(1) 
 DOC
 
 Red='' Nor=''
